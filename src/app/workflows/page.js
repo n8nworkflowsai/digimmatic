@@ -1,9 +1,14 @@
 import WorkflowsPage from "@/components/pages/WorkflowsPage";
 
 export const metadata = {
-  title: "Workflows | DIGIMMATIC AI",
+  title: "Digimmatic: Expert Agentic AI & n8n Automation",
   description:
-    "Our core services — custom AI agents, strategy roadmaps, and complex n8n workflow synchronization.",
+    "Deploy autonomous AI agents. Digimmatic builds advanced n8n and Claude-powered workflows to scale your business. Book a consultation today.",
+  openGraph: {
+    title: "Digimmatic: Expert Agentic AI & n8n Automation",
+    description:
+      "Deploy autonomous AI agents. Digimmatic builds advanced n8n and Claude-powered workflows to scale your business. Book a consultation today.",
+  },
 };
 
 export default function WorkflowsRoute() {

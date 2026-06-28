@@ -25,13 +25,13 @@ const siteUrl =
 
 export const metadata = {
   metadataBase: new URL(siteUrl),
-  title: "DIGIMMATIC AI | Automate the Extraordinary",
+  title: "Scale Your Business with Digimmatic AI Automation",
   description:
-    "Custom AI agents and end-to-end workflows that scale your business operations.",
+    "Stop manual tasks at work. Digimmatic helps businesses including startups and SMBs scale, with powerful AI automation workflows tailored to your unique needs.",
   openGraph: {
-    title: "DIGIMMATIC AI | Automate the Extraordinary",
+    title: "Scale Your Business with Digimmatic AI Automation",
     description:
-      "Custom AI agents and end-to-end workflows that scale your business operations.",
+      "Stop manual tasks at work. Digimmatic helps businesses including startups and SMBs scale, with powerful AI automation workflows tailored to your unique needs.",
     type: "website",
   },
 };

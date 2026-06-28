@@ -16,12 +16,20 @@ if (!user || !pass) {
   process.exit(1);
 }
 
+function resolveSecure(port, rawSecure) {
+  if (rawSecure === "true") return true;
+  if (rawSecure === "false") return false;
+  return port === 465;
+}
+
+const envPort = Number(process.env.SMTP_PORT) || 465;
+
 const configs = [
   {
     label: "env (as configured)",
     host: process.env.SMTP_HOST?.trim(),
-    port: Number(process.env.SMTP_PORT) || 465,
-    secure: process.env.SMTP_SECURE === "false" ? false : Number(process.env.SMTP_PORT) !== 587,
+    port: envPort,
+    secure: resolveSecure(envPort, process.env.SMTP_SECURE),
   },
   {
     label: "cPanel SSL 465",

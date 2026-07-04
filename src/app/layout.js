@@ -1,6 +1,6 @@
 import { Hanken_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
 import PageShell from "@/components/layout/PageShell";
+import VercelInsights from "@/components/VercelInsights";
 import "./globals.css";
 
 const hankenGrotesk = Hanken_Grotesk({
@@ -45,7 +45,7 @@ export default function RootLayout({ children }) {
     >
       <body>
         <PageShell>{children}</PageShell>
-        <Analytics />
+        <VercelInsights />
       </body>
     </html>
   );

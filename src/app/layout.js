@@ -46,6 +46,7 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       className={`${hankenGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}
     >
       <body>

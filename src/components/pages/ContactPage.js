@@ -112,7 +112,7 @@ export default function ContactPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed secure delivery to SMTP route.");
+        throw new Error(data.error || "Failed to send your message.");
       }
 
       setStatus("success");
@@ -128,7 +128,7 @@ export default function ContactPage() {
       setStatus("idle");
       setError(
         submitError.message ||
-          "An unexpected error occurred during SMTP secure routing.",
+          "An unexpected error occurred while sending your message.",
       );
     }
   };

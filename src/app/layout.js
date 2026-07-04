@@ -1,4 +1,5 @@
 import { Hanken_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import PageShell from "@/components/layout/PageShell";
 import "./globals.css";
 
@@ -44,6 +45,7 @@ export default function RootLayout({ children }) {
     >
       <body>
         <PageShell>{children}</PageShell>
+        <Analytics />
       </body>
     </html>
   );

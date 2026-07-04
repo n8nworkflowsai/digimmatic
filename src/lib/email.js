@@ -1,93 +1,19 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-const IMAP_PORTS = new Set([143, 993, 995]);
-
-function resolveSmtpHost(rawHost, user) {
-  const host = rawHost?.trim();
-
-  if (host) {
-    const lower = host.toLowerCase();
-    if (
-      lower.startsWith("mail.") ||
-      lower.startsWith("smtp.") ||
-      lower.includes(".web-hosting.com")
-    ) {
-      return host;
-    }
-
-    // Bare domain (digimmatic.com) → cPanel convention
-    return `mail.${host}`;
-  }
-
-  const domain = user?.split("@")[1];
-  return domain ? `mail.${domain}` : null;
-}
-
-function resolveSmtpPort(rawPort) {
-  const port = Number(rawPort);
-
-  if (!port || IMAP_PORTS.has(port)) {
-    return 465;
-  }
-
-  return port;
-}
-
-function resolveSecure(port, rawSecure) {
-  if (rawSecure === "true") return true;
-  if (rawSecure === "false") return false;
-  return port === 465;
-}
-
-function getSmtpSettings() {
-  const user = process.env.SMTP_USER?.trim();
-  const pass = process.env.SMTP_PASS?.trim();
+function getEmailSettings() {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
   const to = process.env.EMAIL_TO?.trim();
+  const from = process.env.EMAIL_FROM?.trim();
 
-  if (!user || !pass || !to) {
+  if (!apiKey || !to || !from) {
     return null;
   }
 
-  const port = resolveSmtpPort(process.env.SMTP_PORT);
-  const host = resolveSmtpHost(process.env.SMTP_HOST, user);
-
-  if (!host) {
-    return null;
-  }
-
-  return {
-    host,
-    port,
-    secure: resolveSecure(port, process.env.SMTP_SECURE),
-    user,
-    pass,
-    from: process.env.SMTP_FROM?.trim() || user,
-    to,
-  };
+  return { apiKey, to, from };
 }
 
-function createTransporter(settings) {
-  return nodemailer.createTransport({
-    host: settings.host,
-    port: settings.port,
-    secure: settings.secure,
-    auth: {
-      user: settings.user,
-      pass: settings.pass,
-    },
-    connectionTimeout: 15_000,
-    greetingTimeout: 15_000,
-    socketTimeout: 20_000,
-    tls: {
-      minVersion: "TLSv1.2",
-      // Namecheap/cPanel presents *.web-hosting.com cert for mail.yourdomain.com
-      rejectUnauthorized: false,
-    },
-  });
-}
-
-export function isSmtpConfigured() {
-  return getSmtpSettings() !== null;
+export function isEmailConfigured() {
+  return getEmailSettings() !== null;
 }
 
 export async function sendDiscoveryInquiry({
@@ -97,9 +23,11 @@ export async function sendDiscoveryInquiry({
   phone,
   solutions,
 }) {
-  const settings = getSmtpSettings();
+  const settings = getEmailSettings();
   if (!settings) {
-    throw new Error("SMTP environment variables are not configured.");
+    throw new Error(
+      "Email environment variables are not configured (RESEND_API_KEY, EMAIL_TO, EMAIL_FROM).",
+    );
   }
 
   const submittedAt = new Date().toLocaleString("en-US", {
@@ -131,25 +59,23 @@ export async function sendDiscoveryInquiry({
     submittedAt,
   });
 
-  const transporter = createTransporter(settings);
+  const resend = new Resend(settings.apiKey);
 
-  try {
-    await transporter.sendMail({
-      from: settings.from,
-      to: settings.to,
-      replyTo: email,
-      subject,
-      text,
-      html,
-    });
-  } catch (error) {
-    console.error(`SMTP failed via ${settings.host}:${settings.port}`, {
-      message: error.message,
-      code: error.code,
-      response: error.response,
-    });
-    throw error;
+  const { data, error } = await resend.emails.send({
+    from: settings.from,
+    to: settings.to,
+    replyTo: email,
+    subject,
+    text,
+    html,
+  });
+
+  if (error) {
+    console.error("Resend send failed:", error);
+    throw new Error(error.message);
   }
+
+  return data;
 }
 
 function buildDiscoveryEmailText({
@@ -253,7 +179,7 @@ function buildDiscoveryEmailHtml({
 
             <tr>
               <td style="padding:24px 32px 28px;border-top:1px solid rgba(173,198,255,0.12);background:rgba(255,255,255,0.02);">
-                <a href="mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(`Re: Discovery request — ${company}`)}"
+                <a href="mailto:${escapeHtml(email)}?subject=${encodeURIComponent(`Re: Discovery request — ${company}`)}"
                    style="display:inline-block;padding:12px 20px;border-radius:999px;background:linear-gradient(90deg,#adc6ff 0%,#14d1ff 100%);color:#002e6a;text-decoration:none;font-size:14px;font-weight:700;">
                   Reply to ${escapeHtml(name)}
                 </a>

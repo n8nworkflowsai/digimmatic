@@ -37,12 +37,10 @@ export async function POST(request) {
   } catch (error) {
     console.error("Discovery email failed:", {
       message: error.message,
-      code: error.code,
-      response: error.response,
     });
 
     return Response.json(
-      { error: "Failed secure delivery to SMTP route." },
+      { error: "Failed to send your message. Please try again later." },
       { status: 500 },
     );
   }

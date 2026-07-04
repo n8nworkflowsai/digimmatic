@@ -55,6 +55,10 @@ export default function ContactPage() {
     });
   };
 
+  const handlePhoneChange = (event) => {
+    setPhone(event.target.value.replace(/\D/g, ""));
+  };
+
   const resetForm = () => {
     setStatus("idle");
     setSubmission(null);
@@ -269,10 +273,13 @@ export default function ContactPage() {
                       />
                       <input
                         type="tel"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         value={phone}
-                        onChange={(event) => setPhone(event.target.value)}
+                        onChange={handlePhoneChange}
                         className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-slate-100 font-sans text-sm focus:outline-none focus:border-cyan-400 focus:bg-black/60 transition-colors flex-grow"
-                        placeholder="555-0123"
+                        placeholder="501234567"
+                        maxLength={15}
                         required
                       />
                     </div>

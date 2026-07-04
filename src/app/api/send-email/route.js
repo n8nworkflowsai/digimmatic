@@ -35,8 +35,9 @@ export async function POST(request) {
 
     return Response.json({ success: true });
   } catch (error) {
-    console.error("Discovery email failed:", {
+    console.error("[api/send-email] Discovery email failed:", {
       message: error.message,
+      name: error.name,
     });
 
     return Response.json(

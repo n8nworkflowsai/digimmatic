@@ -1,15 +1,45 @@
 import { Resend } from "resend";
 
-function getEmailSettings() {
-  const apiKey = process.env.RESEND_API_KEY?.trim();
-  const to = process.env.EMAIL_TO?.trim();
-  const from = process.env.EMAIL_FROM?.trim();
+function getMissingEmailEnvVars() {
+  const missing = [];
 
-  if (!apiKey || !to || !from) {
+  if (!process.env.RESEND_API_KEY?.trim()) {
+    missing.push("RESEND_API_KEY");
+  }
+  if (!process.env.EMAIL_TO?.trim()) {
+    missing.push("EMAIL_TO");
+  }
+  if (!process.env.EMAIL_FROM?.trim()) {
+    missing.push("EMAIL_FROM");
+  }
+
+  return missing;
+}
+
+function logEmailConfigError(missing) {
+  console.error("[email] Resend is not configured.", {
+    missing,
+    hint: "Set RESEND_API_KEY, EMAIL_TO, and EMAIL_FROM in .env.local or your deployment environment.",
+  });
+
+  if (missing.includes("RESEND_API_KEY")) {
+    console.error(
+      "[email] RESEND_API_KEY is missing. Get a key at https://resend.com/api-keys",
+    );
+  }
+}
+
+function getEmailSettings() {
+  const missing = getMissingEmailEnvVars();
+  if (missing.length > 0) {
     return null;
   }
 
-  return { apiKey, to, from };
+  return {
+    apiKey: process.env.RESEND_API_KEY.trim(),
+    to: process.env.EMAIL_TO.trim(),
+    from: process.env.EMAIL_FROM.trim(),
+  };
 }
 
 export function isEmailConfigured() {
@@ -25,8 +55,10 @@ export async function sendDiscoveryInquiry({
 }) {
   const settings = getEmailSettings();
   if (!settings) {
+    const missing = getMissingEmailEnvVars();
+    logEmailConfigError(missing);
     throw new Error(
-      "Email environment variables are not configured (RESEND_API_KEY, EMAIL_TO, EMAIL_FROM).",
+      `Resend is not configured. Missing: ${missing.join(", ")}`,
     );
   }
 
@@ -71,7 +103,13 @@ export async function sendDiscoveryInquiry({
   });
 
   if (error) {
-    console.error("Resend send failed:", error);
+    console.error("[email] Resend send failed:", {
+      message: error.message,
+      name: error.name,
+      statusCode: error.statusCode,
+      to: settings.to,
+      from: settings.from,
+    });
     throw new Error(error.message);
   }
 

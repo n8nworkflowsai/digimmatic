@@ -25,7 +25,8 @@ const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ||
   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
 
-const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
+const gaMeasurementId =
+  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || "G-TTM1HVZF3B";
 const isProduction = process.env.NODE_ENV === "production";
 
 export const metadata = {
@@ -50,9 +51,7 @@ export default function RootLayout({ children }) {
       <body>
         <PageShell>{children}</PageShell>
         <VercelInsights />
-        {isProduction && gaMeasurementId ? (
-          <GoogleAnalytics gaId={gaMeasurementId} />
-        ) : null}
+        {isProduction ? <GoogleAnalytics gaId={gaMeasurementId} /> : null}
       </body>
     </html>
   );

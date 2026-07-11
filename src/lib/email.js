@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { sanitizeEmailHeader } from "@/lib/validation";
 
 function getMissingEmailEnvVars() {
   const missing = [];
@@ -73,7 +74,9 @@ export async function sendDiscoveryInquiry({
     .map((item) => item.trim())
     .filter(Boolean);
 
-  const subject = `[DIGIMMATIC AI] Discovery request — ${company} · ${name}`;
+  const safeCompany = sanitizeEmailHeader(company);
+  const safeName = sanitizeEmailHeader(name);
+  const subject = `[DIGIMMATIC AI] Discovery request — ${safeCompany} · ${safeName}`;
   const text = buildDiscoveryEmailText({
     name,
     company,
@@ -85,6 +88,7 @@ export async function sendDiscoveryInquiry({
   const html = buildDiscoveryEmailHtml({
     name,
     company,
+    safeCompany,
     email,
     phone,
     solutionList,
@@ -142,6 +146,7 @@ function buildDiscoveryEmailText({
 function buildDiscoveryEmailHtml({
   name,
   company,
+  safeCompany,
   email,
   phone,
   solutionList,
@@ -217,7 +222,7 @@ function buildDiscoveryEmailHtml({
 
             <tr>
               <td style="padding:24px 32px 28px;border-top:1px solid rgba(173,198,255,0.12);background:rgba(255,255,255,0.02);">
-                <a href="mailto:${escapeHtml(email)}?subject=${encodeURIComponent(`Re: Discovery request — ${company}`)}"
+                <a href="mailto:${escapeHtml(email)}?subject=${encodeURIComponent(`Re: Discovery request — ${safeCompany}`)}"
                    style="display:inline-block;padding:12px 20px;border-radius:999px;background:linear-gradient(90deg,#adc6ff 0%,#14d1ff 100%);color:#002e6a;text-decoration:none;font-size:14px;font-weight:700;">
                   Reply to ${escapeHtml(name)}
                 </a>

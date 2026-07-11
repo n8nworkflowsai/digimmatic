@@ -2,6 +2,8 @@ import { Hanken_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import PageShell from "@/components/layout/PageShell";
 import VercelInsights from "@/components/VercelInsights";
+import { resolveSiteUrl } from "@/lib/site-url";
+import { getGaMeasurementId } from "@/lib/analytics";
 import "./globals.css";
 
 const hankenGrotesk = Hanken_Grotesk({
@@ -21,12 +23,9 @@ const jetbrainsMono = JetBrains_Mono({
   weight: ["400", "500", "600"],
 });
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+const siteUrl = resolveSiteUrl();
 
-const gaMeasurementId =
-  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || "G-TTM1HVZF3B";
+const gaMeasurementId = getGaMeasurementId();
 const isProduction = process.env.NODE_ENV === "production";
 
 export const metadata = {

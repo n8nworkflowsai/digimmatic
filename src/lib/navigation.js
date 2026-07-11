@@ -22,7 +22,7 @@ export const FOOTER_LINKS = [
   { id: "success", label: "Success cases", href: "/success" },
   {
     id: "contact",
-    label: "Consult agency",
+    label: "Book discovery",
     href: "/contact",
     scrollToCalendly: true,
   },

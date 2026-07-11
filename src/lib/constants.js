@@ -187,9 +187,7 @@ export const SOLUTION_OPTIONS = [
   },
 ];
 
-import countryCodes from "./country-codes.json";
-
-export const COUNTRY_CODES = countryCodes;
+export const SOLUTION_LABELS = SOLUTION_OPTIONS.map((option) => option.label);
 
 export const FINTECH_IMAGE_URL =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuDd8rJJ_RpFp6uJzn5JeWKFCnBlDJ02JNxuDjkv4zB3hbEpn-YYLefeYPKaIgi9E7gWfftSAkNW_zKqkHcOYbFOgXWgx1zFLKl62MsG6kBIaVhmPa4-49py3Zrx1ooLuKSgjhZ7sSZlqG7T1rVfOlDPIQhF1XGNPHryMDHPaU-fUQi91k45bCLGX3W7DuJER6OZtrFgPcVFMpB8yf8ssWzCjh-kOZmlUloKkKqnkPb0rBShmycEi0-WdnpPMJYjc6IetwheKcpDlBDU";

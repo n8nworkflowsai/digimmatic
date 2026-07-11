@@ -1,37 +1,43 @@
 import { sendDiscoveryInquiry } from "@/lib/email";
+import { enforceRateLimit } from "@/lib/rate-limit";
+import { SOLUTION_LABELS } from "@/lib/constants";
+import { getClientIp, validateDiscoveryPayload } from "@/lib/validation";
 
 export const runtime = "nodejs";
 
 export async function POST(request) {
   try {
-    const body = await request.json();
-    const name = body.name?.trim();
-    const company = body.company?.trim();
-    const email = body.email?.trim();
-    const phone = body.phone?.trim();
-    const solutions = body.solutions?.trim();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return Response.json({ error: "Invalid request body." }, { status: 400 });
+    }
 
-    if (!name || !company || !email || !phone) {
+    const validation = validateDiscoveryPayload(body, SOLUTION_LABELS);
+
+    if (!validation.ok) {
+      return Response.json({ error: validation.error }, { status: validation.status });
+    }
+
+    if (validation.honeypot) {
+      return Response.json({ success: true });
+    }
+
+    const clientIp = getClientIp(request);
+    const rateLimit = await enforceRateLimit(`send-email:${clientIp}`);
+
+    if (!rateLimit.allowed) {
       return Response.json(
-        { error: "All required fields must be provided." },
-        { status: 400 },
+        { error: "Too many requests. Please try again later." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfter ?? 60) },
+        },
       );
     }
 
-    if (!solutions) {
-      return Response.json(
-        { error: "At least one AI Solution must be selected." },
-        { status: 400 },
-      );
-    }
-
-    await sendDiscoveryInquiry({
-      name,
-      company,
-      email,
-      phone,
-      solutions,
-    });
+    await sendDiscoveryInquiry(validation.payload);
 
     return Response.json({ success: true });
   } catch (error) {

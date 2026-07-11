@@ -25,10 +25,11 @@ export default function ContactPage() {
   const [selectedSolutions, setSelectedSolutions] = useState([
     "AI Customer Support",
   ]);
+  const [honeypot, setHoneypot] = useState("");
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState(null);
   const [submission, setSubmission] = useState(null);
-  const { refreshKey, triggerManualRefresh } = useCalendlyRefresh(CALENDLY_URL);
+  const { refreshKey, triggerManualRefresh } = useCalendlyRefresh();
   const calendlySrc = buildCalendlyUrl(CALENDLY_URL);
 
   useEffect(() => {
@@ -68,6 +69,7 @@ export default function ContactPage() {
     setEmail("");
     setPhone("");
     setSelectedSolutions(["AI Customer Support"]);
+    setHoneypot("");
   };
 
   const handleSubmit = async (event) => {
@@ -110,10 +112,11 @@ export default function ContactPage() {
           email: email.trim(),
           phone: fullPhone,
           solutions,
+          _hp_website: honeypot,
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to send your message.");
@@ -175,6 +178,22 @@ export default function ContactPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
+                  <div
+                    aria-hidden="true"
+                    className="absolute -left-[9999px] h-0 w-0 overflow-hidden"
+                  >
+                    <label htmlFor="contact-website">Website</label>
+                    <input
+                      id="contact-website"
+                      type="text"
+                      name="website"
+                      value={honeypot}
+                      onChange={(event) => setHoneypot(event.target.value)}
+                      tabIndex={-1}
+                      autoComplete="off"
+                    />
+                  </div>
+
                   <div>
                     <span className="block text-xs font-mono text-slate-400 mb-3 uppercase tracking-wider">
                       What core solutions are you looking to automate? *
@@ -190,6 +209,7 @@ export default function ContactPage() {
                             key={option.id}
                             type="button"
                             onClick={() => toggleSolution(option.label)}
+                            aria-pressed={isSelected}
                             className={`p-4 rounded-xl text-left border transition-all duration-200 cursor-pointer ${
                               isSelected
                                 ? "bg-cyan-950/40 border-cyan-400 text-white shadow-[0_0_15px_rgba(20,209,255,0.12)] ring-1 ring-cyan-400/20"
@@ -220,10 +240,14 @@ export default function ContactPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[11px] font-mono text-slate-400 mb-2 uppercase">
+                      <label
+                        htmlFor="contact-name"
+                        className="block text-[11px] font-mono text-slate-400 mb-2 uppercase"
+                      >
                         Your Name *
                       </label>
                       <input
+                        id="contact-name"
                         type="text"
                         value={name}
                         onChange={(event) => setName(event.target.value)}
@@ -233,10 +257,14 @@ export default function ContactPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-mono text-slate-400 mb-2 uppercase">
+                      <label
+                        htmlFor="contact-company"
+                        className="block text-[11px] font-mono text-slate-400 mb-2 uppercase"
+                      >
                         Company Name *
                       </label>
                       <input
+                        id="contact-company"
                         type="text"
                         value={company}
                         onChange={(event) => setCompany(event.target.value)}
@@ -248,10 +276,14 @@ export default function ContactPage() {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-mono text-slate-400 mb-2 uppercase">
+                    <label
+                      htmlFor="contact-email"
+                      className="block text-[11px] font-mono text-slate-400 mb-2 uppercase"
+                    >
                       Work Email Address *
                     </label>
                     <input
+                      id="contact-email"
                       type="email"
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
@@ -262,7 +294,10 @@ export default function ContactPage() {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-mono text-slate-400 mb-2 uppercase">
+                    <label
+                      htmlFor="contact-phone"
+                      className="block text-[11px] font-mono text-slate-400 mb-2 uppercase"
+                    >
                       Phone Number *
                     </label>
                     <div className="flex gap-2">
@@ -270,8 +305,10 @@ export default function ContactPage() {
                         id="country-code-select"
                         value={countryCode}
                         onChange={setCountryCode}
+                        ariaLabel="Country calling code"
                       />
                       <input
+                        id="contact-phone"
                         type="tel"
                         inputMode="numeric"
                         pattern="[0-9]*"
@@ -286,7 +323,10 @@ export default function ContactPage() {
                   </div>
 
                   {error ? (
-                    <div className="p-3 bg-red-950/20 border border-red-500/30 rounded-xl text-red-400 text-xs font-mono flex items-center gap-2">
+                    <div
+                      role="alert"
+                      className="p-3 bg-red-950/20 border border-red-500/30 rounded-xl text-red-400 text-xs font-mono flex items-center gap-2"
+                    >
                       <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shrink-0" />
                       <span>{error}</span>
                     </div>

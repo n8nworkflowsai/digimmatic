@@ -1,31 +1,36 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, Search } from "lucide-react";
-import { COUNTRY_CODES } from "@/lib/constants";
+import COUNTRY_CODES from "@/lib/country-codes";
 
 const DROPDOWN_WIDTH = 288;
 const LIST_VISIBLE_ROWS = 6;
 const ROW_HEIGHT = 40;
 const LIST_HEIGHT = LIST_VISIBLE_ROWS * ROW_HEIGHT;
 
+function subscribe() {
+  return () => {};
+}
+
+function useIsClient() {
+  return useSyncExternalStore(subscribe, () => true, () => false);
+}
+
 export default function CountryCodeSelect({
   value,
   onChange,
   id = "country-code-select",
+  ariaLabel = "Country calling code",
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsClient();
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const containerRef = useRef(null);
   const dropdownRef = useRef(null);
   const searchRef = useRef(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const updatePosition = () => {
     if (!containerRef.current) {
@@ -43,6 +48,22 @@ export default function CountryCodeSelect({
       left: Math.min(rect.left, window.innerWidth - DROPDOWN_WIDTH - 16),
     });
   };
+
+  const toggleOpen = () => {
+    if (!open) {
+      setQuery("");
+    }
+    setOpen((current) => !current);
+  };
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const timer = setTimeout(() => searchRef.current?.focus(), 50);
+    return () => clearTimeout(timer);
+  }, [open]);
 
   useLayoutEffect(() => {
     if (!open) {
@@ -83,14 +104,6 @@ export default function CountryCodeSelect({
     };
   }, [open]);
 
-  useEffect(() => {
-    if (open) {
-      setQuery("");
-      const timer = setTimeout(() => searchRef.current?.focus(), 50);
-      return () => clearTimeout(timer);
-    }
-  }, [open]);
-
   const filteredCountries = COUNTRY_CODES.filter((country) => {
     const normalizedQuery = query.toLowerCase();
     return (
@@ -104,6 +117,8 @@ export default function CountryCodeSelect({
     <div
       ref={dropdownRef}
       id={`${id}-dropdown`}
+      role="listbox"
+      aria-label="Country calling codes"
       style={{
         position: "fixed",
         top: position.top,
@@ -141,6 +156,8 @@ export default function CountryCodeSelect({
               <button
                 key={`${country.code}-${country.dial_code}`}
                 type="button"
+                role="option"
+                aria-selected={isSelected}
                 onClick={() => {
                   onChange(country.dial_code);
                   setOpen(false);
@@ -178,9 +195,10 @@ export default function CountryCodeSelect({
       <button
         type="button"
         id={`${id}-trigger`}
-        onClick={() => setOpen((current) => !current)}
+        onClick={toggleOpen}
         aria-expanded={open}
         aria-haspopup="listbox"
+        aria-label={`${ariaLabel}: ${value}`}
         className="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-3 text-slate-100 font-sans text-sm focus:outline-none focus:border-cyan-400 focus:bg-[#030712] transition-all cursor-pointer flex items-center justify-between gap-1.5 shadow-sm hover:border-white/20 active:scale-[0.98]"
       >
         <span className="truncate font-medium">{value}</span>

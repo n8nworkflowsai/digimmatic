@@ -70,6 +70,7 @@ export default function ROICalculator() {
                   max={ROI_LIMITS.employees.max}
                   value={employees}
                   onChange={(event) => setEmployees(Number(event.target.value))}
+                  aria-label="Number of affected employees"
                   className="w-full accent-[#adc6ff] cursor-pointer"
                 />
               </div>
@@ -89,6 +90,7 @@ export default function ROICalculator() {
                   onChange={(event) =>
                     setHoursPerWeek(Number(event.target.value))
                   }
+                  aria-label="Manual hours spent per person per week"
                   className="w-full accent-[#14d1ff] cursor-pointer"
                 />
               </div>
@@ -106,6 +108,7 @@ export default function ROICalculator() {
                   max={ROI_LIMITS.hourlyRate.max}
                   value={hourlyRate}
                   onChange={(event) => setHourlyRate(Number(event.target.value))}
+                  aria-label="Average fully-loaded blended hourly cost in US dollars"
                   className="w-full accent-cyan-400 cursor-pointer"
                 />
               </div>

@@ -212,7 +212,7 @@ export default function SuccessPage() {
                 href="/contact"
                 className="font-mono font-bold text-cyan-300 hover:underline flex items-center space-x-1"
               >
-                <span>Full Case Study</span>
+                <span>Request Discovery Call</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
               </Link>
             </div>

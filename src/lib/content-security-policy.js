@@ -13,12 +13,20 @@ const GA4_IMG_SRC = [
 
 const GA4_SCRIPT_SRC = "https://*.googletagmanager.com";
 
+const APOLLO_SCRIPT_SRC = [
+  "https://assets.apollo.io",
+  "https://d-code.liadm.com",
+].join(" ");
+
+const APOLLO_CONNECT_SRC = "https://aplo-evnt.com";
+
 export function buildContentSecurityPolicy(isProduction) {
   const scriptSrc = [
     "'self'",
     "'unsafe-inline'",
     ...(isProduction ? [] : ["'unsafe-eval'"]),
     GA4_SCRIPT_SRC,
+    APOLLO_SCRIPT_SRC,
     "https://va.vercel-scripts.com",
   ].join(" ");
 
@@ -29,6 +37,7 @@ export function buildContentSecurityPolicy(isProduction) {
     "https://vitals.vercel-insights.com",
     "https://va.vercel-scripts.com",
     "https://*.calendly.com",
+    APOLLO_CONNECT_SRC,
   ].join(" ");
 
   const imgSrc = [

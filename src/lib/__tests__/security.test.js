@@ -2,7 +2,16 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { buildCalendlyUrl } from "../calendly.js";
 import { buildContentSecurityPolicy } from "../content-security-policy.js";
-import { DEFAULT_GA_MEASUREMENT_ID, getGaMeasurementId } from "../analytics.js";
+import {
+  DEFAULT_GA_MEASUREMENT_ID,
+  applyTrackingConsent,
+  buildConsentState,
+  gaDisableKey,
+  getGaMeasurementId,
+  getGtmId,
+  GOOGLE_CONSENT_DENIED,
+  GOOGLE_CONSENT_GRANTED,
+} from "../analytics.js";
 import { calculateROI, ROI_EFFICIENCY_RATE } from "../roi.js";
 import { resolveSiteUrl } from "../site-url.js";
 import {
@@ -19,6 +28,20 @@ import {
   validateDiscoveryPayload,
 } from "../validation.js";
 import { SOLUTION_LABELS } from "../constants.js";
+import {
+  buildPageUrl,
+  DEFAULT_APOLLO_APP_ID,
+  getApolloAppId,
+} from "../apollo.js";
+import {
+  CONSENT,
+  CONSENT_STORAGE_KEY,
+  getServerConsentSnapshot,
+  hasAnalyticsConsent,
+  parseConsentValue,
+  readStoredConsent,
+  writeStoredConsent,
+} from "../consent.js";
 
 function mockRequest(headers) {
   return {
@@ -251,6 +274,97 @@ describe("getGaMeasurementId", () => {
   });
 });
 
+describe("getGtmId", () => {
+  const originalEnv = { ...process.env };
+
+  it("returns the configured GTM container id", () => {
+    process.env = {
+      ...originalEnv,
+      NEXT_PUBLIC_GTM_ID: "GTM-TEST123",
+    };
+    assert.equal(getGtmId(), "GTM-TEST123");
+    process.env = originalEnv;
+  });
+
+  it("returns an empty string when unset", () => {
+    process.env = { ...originalEnv };
+    delete process.env.NEXT_PUBLIC_GTM_ID;
+    assert.equal(getGtmId(), "");
+    process.env = originalEnv;
+  });
+});
+
+describe("getApolloAppId", () => {
+  const originalEnv = { ...process.env };
+
+  it("returns the configured Apollo app id", () => {
+    process.env = {
+      ...originalEnv,
+      NEXT_PUBLIC_APOLLO_APP_ID: "66a09ac189ee7901b2189c29",
+    };
+    assert.equal(getApolloAppId(), "66a09ac189ee7901b2189c29");
+    process.env = originalEnv;
+  });
+
+  it("returns the default Apollo app id when unset", () => {
+    process.env = { ...originalEnv };
+    delete process.env.NEXT_PUBLIC_APOLLO_APP_ID;
+    assert.equal(getApolloAppId(), DEFAULT_APOLLO_APP_ID);
+    process.env = originalEnv;
+  });
+});
+
+describe("buildPageUrl", () => {
+  it("builds absolute urls with optional query strings", () => {
+    assert.equal(
+      buildPageUrl("/contact", { toString: () => "utm_source=apollo" }),
+      "https://digimmatic.com/contact?utm_source=apollo",
+    );
+    assert.equal(buildPageUrl("/workflows", null), "https://digimmatic.com/workflows");
+  });
+});
+
+describe("google consent helpers", () => {
+  it("builds granted and denied consent states", () => {
+    assert.deepEqual(buildConsentState(true), { ...GOOGLE_CONSENT_GRANTED });
+    assert.deepEqual(buildConsentState(false), { ...GOOGLE_CONSENT_DENIED });
+  });
+
+  it("updates consent and toggles the GA disable kill switch", () => {
+    const calls = [];
+    const gtag = (...args) => calls.push(args);
+    const target = {};
+
+    applyTrackingConsent({
+      granted: false,
+      measurementId: "G-TEST",
+      gtag,
+      target,
+    });
+
+    assert.equal(target[gaDisableKey("G-TEST")], true);
+    assert.deepEqual(calls.at(-1), [
+      "consent",
+      "update",
+      { ...GOOGLE_CONSENT_DENIED },
+    ]);
+
+    applyTrackingConsent({
+      granted: true,
+      measurementId: "G-TEST",
+      gtag,
+      target,
+    });
+
+    assert.equal(target[gaDisableKey("G-TEST")], false);
+    assert.deepEqual(calls.at(-1), [
+      "consent",
+      "update",
+      { ...GOOGLE_CONSENT_GRANTED },
+    ]);
+  });
+});
+
 describe("content security policy", () => {
   it("includes Google Analytics 4 wildcard domains for scripts, connect, and img", () => {
     const productionCsp = buildContentSecurityPolicy(true);
@@ -262,7 +376,42 @@ describe("content security policy", () => {
     assert.match(productionCsp, /connect-src[^;]*https:\/\/\*\.googletagmanager\.com/);
     assert.match(productionCsp, /img-src[^;]*https:\/\/\*\.google-analytics\.com/);
     assert.match(productionCsp, /img-src[^;]*https:\/\/\*\.googletagmanager\.com/);
+    assert.match(productionCsp, /script-src[^;]*https:\/\/assets\.apollo\.io/);
+    assert.match(productionCsp, /connect-src[^;]*https:\/\/aplo-evnt\.com/);
     assert.doesNotMatch(productionCsp, /unsafe-eval/);
     assert.match(developmentCsp, /unsafe-eval/);
+  });
+});
+
+describe("consent storage", () => {
+  it("parses only accepted or declined values", () => {
+    assert.equal(parseConsentValue("accepted"), CONSENT.ACCEPTED);
+    assert.equal(parseConsentValue("declined"), CONSENT.DECLINED);
+    assert.equal(parseConsentValue("maybe"), null);
+    assert.equal(parseConsentValue(null), null);
+  });
+
+  it("reads and writes consent through a storage adapter", () => {
+    const store = new Map();
+    const storage = {
+      getItem(key) {
+        return store.has(key) ? store.get(key) : null;
+      },
+      setItem(key, value) {
+        store.set(key, value);
+      },
+    };
+
+    assert.equal(readStoredConsent(storage), null);
+    assert.equal(writeStoredConsent("nope", storage), false);
+    assert.equal(writeStoredConsent(CONSENT.ACCEPTED, storage), true);
+    assert.equal(store.get(CONSENT_STORAGE_KEY), CONSENT.ACCEPTED);
+    assert.equal(readStoredConsent(storage), CONSENT.ACCEPTED);
+    assert.equal(hasAnalyticsConsent(CONSENT.ACCEPTED), true);
+    assert.equal(hasAnalyticsConsent(CONSENT.DECLINED), false);
+  });
+
+  it("exposes a pending server snapshot before client hydration", () => {
+    assert.equal(getServerConsentSnapshot(), "pending");
   });
 });

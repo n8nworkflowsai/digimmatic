@@ -32,7 +32,7 @@ export default function ConsentBanner() {
           transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
           className="fixed inset-x-0 bottom-0 z-[60] p-4 sm:p-6 pointer-events-none"
         >
-          <div className="pointer-events-auto mx-auto max-w-3xl glass-card rounded-2xl border border-white/10 bg-[#030712]/95 px-5 py-4 sm:px-6 sm:py-5 shadow-2xl shadow-black/40">
+          <div className="pointer-events-auto mx-auto max-w-3xl rounded-2xl border border-white/15 bg-[#0b1220] px-5 py-4 sm:px-6 sm:py-5 shadow-2xl shadow-black/50">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
               <div className="min-w-0 space-y-1.5">
                 <p
@@ -43,12 +43,9 @@ export default function ConsentBanner() {
                 </p>
                 <p
                   id="cookie-consent-description"
-                  className="text-xs leading-relaxed text-slate-400 font-mono"
+                  className="text-xs leading-relaxed text-slate-400"
                 >
-                  We use cookies and similar technologies to understand how the
-                  site is used, identify visiting companies, and improve your
-                  experience. Analytics and visitor tracking only load if you
-                  accept.
+                  We use cookies and similar technologies to enhance your browsing experience, analyze site traffic, personalize content, and deliver targeted marketing. By clicking "Accept", you consent to our use of cookies as per compliance standards.
                 </p>
               </div>
 
